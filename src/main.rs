@@ -2,36 +2,44 @@ use cursive::event::Callback;
 use cursive::theme::{BaseColor, BorderStyle, Color, ColorStyle, Palette};
 use cursive::theme::{BaseColor::*, Color::*, PaletteColor::*};
 use cursive::views::Canvas;
-use cursive::views::LayerPosition;
 use cursive::Cursive;
+
+mod trains;
 
 #[derive(Debug)]
 enum Error {
+    InvalidAnimation,
+    InvalidFrame,
     EmptyAnimation,
-    EmptyFrame,
 }
 
 type Result<T> = std::result::Result<T, Error>;
 
+/// A struct representing a single frame of animation
 struct Frame {
     text: Vec<String>,
 }
 
 impl Frame {
+    /// Create a new frame of animation from the given lines of text
+    ///
+    /// This frame will be rendered with the lines left-aligned,
+    /// directly on top of each other.
     fn new(text: Vec<String>) -> Result<Self> {
-        if text.len() == 0 {
-            Err(Error::EmptyFrame)
-        } else {
-            Ok(Self { text })
-        }
+        Ok(Self { text })
+    }
+
+    fn from_str(text: &str) -> Result<Self> {
+        Ok(Self {
+            text: text
+                .split("\n")
+                .map(|line| line.to_string())
+                .collect::<Vec<_>>(),
+        })
     }
 
     fn width(&self) -> usize {
-        self.text
-            .iter()
-            .map(|line| line.len())
-            .max()
-            .expect("Unable to get largest line of frame")
+        self.text.iter().map(|line| line.len()).max().unwrap_or(0)
     }
 }
 
@@ -54,6 +62,19 @@ impl Animation {
                 current_step: 0,
             })
         }
+    }
+
+    fn from_str(speed: usize, text: &str) -> Result<Self> {
+        let frames = text
+            .split("\n\n")
+            .map(|block| Frame::from_str(block))
+            .collect::<Result<Vec<_>>>()?;
+        Ok(Self {
+            frames,
+            speed,
+            current_frame_idx: 0,
+            current_step: 0,
+        })
     }
 
     fn step(&mut self) {
@@ -118,22 +139,7 @@ fn main() {
     siv.set_theme(theme);
 
     let state = TrainState::new(
-        Animation::new(
-            5,
-            vec![
-                Frame::new(vec![
-                    "fooooooooooooooooooooooooooo".into(),
-                    "baaaaaaaaaaaaaaaaaaaaaaaaaar".into(),
-                ])
-                .expect("Invalid frame"),
-                Frame::new(vec![
-                    "baaaaaaaaaaaaaaaaaaaaaaaaaar".into(),
-                    "fooooooooooooooooooooooooooo".into(),
-                ])
-                .expect("Invalid frame"),
-            ],
-        )
-        .expect("Invalid animation"),
+        Animation::from_str(1, &trains::default_train_animation()).expect("Invalid animation"),
     );
 
     let canvas = Canvas::new(state)
@@ -187,6 +193,10 @@ fn main() {
 
     // We can quit by pressing `q` (for now)
     siv.add_global_callback('q', Cursive::quit);
+
+    // Don't allowt the usual suspects to force an exit
+    siv.clear_global_callbacks(cursive::event::Event::Exit);
+    siv.clear_global_callbacks(cursive::event::Event::CtrlChar('c'));
 
     siv.add_fullscreen_layer(canvas);
 
