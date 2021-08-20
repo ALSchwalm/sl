@@ -14,5 +14,9 @@ run:
 clean:
 	cargo clean
 
+.PHONY: fmt
+fmt:
+	cargo fmt
+
 .PHONY: distclean
 distclean: clean
