@@ -29,6 +29,7 @@ impl Frame {
         Ok(Self { text })
     }
 
+    /// Create a frame of animation from a single string
     fn from_str(text: &str) -> Result<Self> {
         Ok(Self {
             text: text
@@ -41,6 +42,10 @@ impl Frame {
     fn width(&self) -> usize {
         self.text.iter().map(|line| line.len()).max().unwrap_or(0)
     }
+
+    fn height(&self) -> usize {
+        self.text.len()
+    }
 }
 
 struct Animation {
@@ -51,6 +56,7 @@ struct Animation {
 }
 
 impl Animation {
+    /// Create a new animation from a list of frames
     fn new(speed: usize, frames: Vec<Frame>) -> Result<Self> {
         if frames.len() == 0 {
             Err(Error::EmptyAnimation)
@@ -64,6 +70,9 @@ impl Animation {
         }
     }
 
+    /// Create a new animation from a string
+    ///
+    /// Frames are expected to be delimited by two newlines
     fn from_str(speed: usize, text: &str) -> Result<Self> {
         let frames = text
             .split("\n\n")
@@ -77,6 +86,8 @@ impl Animation {
         })
     }
 
+    /// Advance the animation. This may update the current frame depending
+    /// on the speed of the animation
     fn step(&mut self) {
         self.current_step += 1;
         if self.current_step == self.speed {
@@ -85,6 +96,7 @@ impl Animation {
         }
     }
 
+    /// Get the current frame of the animation
     fn current_frame(&self) -> &Frame {
         &self.frames[self.current_frame_idx]
     }
@@ -97,6 +109,15 @@ impl Animation {
             .max()
             .expect("Unable to get frame width")
     }
+
+    /// The maximum height of any frame in this animation
+    fn height(&self) -> usize {
+        self.frames
+            .iter()
+            .map(|frame| frame.height())
+            .max()
+            .expect("Unable to get frame height")
+    }
 }
 
 struct TrainState {
@@ -108,6 +129,7 @@ struct TrainState {
 }
 
 impl TrainState {
+    /// Create a new TrainState with the given animation
     fn new(animation: Animation) -> Self {
         TrainState {
             view_width: None,
@@ -118,12 +140,55 @@ impl TrainState {
         }
     }
 
+    /// Determine whether the train has animated accross the screen
     fn complete(&self) -> bool {
         self.x < -((self.view_width.expect("Unknown view width") + self.animation.width()) as i32)
     }
+
+    /// Render the current state to the given printer
+    fn render(&self, printer: &cursive::Printer) {
+        let x_offset = self.view_width.expect("Unknown view width") as i32 + self.x;
+
+        // Center the animation vertically
+        let middle_row = self.view_height.expect("Unknown view height") as i32 / 2;
+        let animation_height = self.animation.height() as i32;
+        let y_offset = middle_row - animation_height/2 + self.y;
+
+        for (i, line) in self.animation.current_frame().text.iter().enumerate() {
+            // Get the subsection of the line that should be renderd based
+            // on the view
+            // TODO: this should be cleaned up
+            let (line, x_offset) = if x_offset < 0 {
+                let x_offset = (-x_offset) as usize;
+                if x_offset > line.len() {
+                    ("".into(), 0)
+                } else {
+                    ((&line[x_offset..]).to_string(), 0)
+                }
+            } else {
+                (line.clone(), x_offset)
+            };
+
+            // NOTE: we don't need to handle negative y_offset+i here,
+            // because cursive already handles that as expected (the
+            // line that is 'off screen' will not be rendered)
+
+            printer.print((x_offset, y_offset + i as i32), &line);
+        }
+    }
+
+    /// Advance the state of the train
+    ///
+    /// This updates both the animation state and the position of the
+    /// animation on the canvas
+    fn step(&mut self) {
+        self.x -= 1;
+        self.animation.step();
+    }
 }
 
-fn main() {
+/// Setup the color theme and keybindings for cursive
+fn init_cursive() -> cursive::CursiveRunnable {
     let mut siv = cursive::default();
 
     let mut theme = siv.current_theme().clone();
@@ -138,41 +203,33 @@ fn main() {
 
     siv.set_theme(theme);
 
+    // We can quit by pressing `q` (for now)
+    siv.add_global_callback('q', Cursive::quit);
+
+    // Don't allowt the usual suspects to force an exit
+    siv.clear_global_callbacks(cursive::event::Event::Exit);
+    siv.clear_global_callbacks(cursive::event::Event::CtrlChar('c'));
+
+    // This seems about right
+    siv.set_fps(18);
+
+    siv
+}
+
+fn main() {
+    let mut siv = init_cursive();
+
     let state = TrainState::new(
         Animation::from_str(1, &trains::default_train_animation()).expect("Invalid animation"),
     );
 
     let canvas = Canvas::new(state)
         .with_draw(|state, printer| {
-            let x_offset = state.view_width.expect("Unknown view width") as i32 + state.x;
-            let y_offset = state.view_height.expect("Unknown view height") as i32 / 2 + state.y;
-
-            for (i, line) in state.animation.current_frame().text.iter().enumerate() {
-                // Get the subsection of the line that should be renderd based
-                // on the view
-                // TODO: this should be cleaned up
-                let (line, x_offset) = if x_offset < 0 {
-                    let x_offset = (-x_offset) as usize;
-                    if x_offset > line.len() {
-                        ("".into(), 0)
-                    } else {
-                        ((&line[x_offset..]).to_string(), 0)
-                    }
-                } else {
-                    (line.clone(), x_offset)
-                };
-
-                // NOTE: we don't need to handle negative y_offset+i here,
-                // because cursive already handles that as expected (the
-                // line that is 'off screen' will not be rendered)
-
-                printer.print((x_offset, y_offset + i as i32), &line);
-            }
+            state.render(printer)
         })
         .with_on_event(|state, event| match event {
             cursive::event::Event::Refresh => {
-                state.x -= 1;
-                state.animation.step();
+                state.step();
                 let done = state.complete();
                 cursive::event::EventResult::Consumed(Some(Callback::from_fn(
                     move |siv: &mut Cursive| {
@@ -191,17 +248,7 @@ fn main() {
             constraints
         });
 
-    // We can quit by pressing `q` (for now)
-    siv.add_global_callback('q', Cursive::quit);
-
-    // Don't allowt the usual suspects to force an exit
-    siv.clear_global_callbacks(cursive::event::Event::Exit);
-    siv.clear_global_callbacks(cursive::event::Event::CtrlChar('c'));
-
     siv.add_fullscreen_layer(canvas);
-
-    // This seems about right
-    siv.set_fps(18);
 
     // Run the event loop
     siv.run();
