@@ -33,5 +33,26 @@ pub fn default_train_animation() -> String {
         .iter()
         .map(|wheels| DEFAULT_TRAIN_TOP.to_string() + &wheels.to_string())
         .collect::<Vec<_>>()
-        .join("\n\n")
+        .join("\n\n\n")
+}
+
+const DEFAULT_SMOKE: [&'static str; 2] = [
+    "                (  ) (@@) (  )  (@)  ()   @   O   @   O   @   O   @   O   @
+             (@@@)
+         (   )
+     (@@@@)
+  (    )
+
+(@@@@)",
+    "                (@@) (  ) (@@)  ( )  ()   O   @   O   @   O   @   O   @   O
+             (   )
+         (@@@)
+     (    )
+  (@@@@)
+
+(    )",
+];
+
+pub fn default_smoke_animation() -> String {
+    DEFAULT_SMOKE.join("\n\n\n")
 }

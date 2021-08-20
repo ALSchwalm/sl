@@ -75,7 +75,7 @@ impl Animation {
     /// Frames are expected to be delimited by two newlines
     fn from_str(speed: usize, text: &str) -> Result<Self> {
         let frames = text
-            .split("\n\n")
+            .split("\n\n\n")
             .map(|block| Frame::from_str(block))
             .collect::<Result<Vec<_>>>()?;
         Ok(Self {
@@ -125,36 +125,63 @@ struct TrainState {
     view_height: Option<usize>,
     x: i32,
     y: i32,
-    animation: Animation,
+    train_animation: Animation,
+    smoke_animation: Animation,
+    smoke_offset: usize,
 }
 
 impl TrainState {
     /// Create a new TrainState with the given animation
-    fn new(animation: Animation) -> Self {
+    fn new(train_animation: Animation, smoke_animation: Animation, smoke_offset: usize) -> Self {
         TrainState {
             view_width: None,
             view_height: None,
             x: 0,
             y: 0,
-            animation: animation,
+            train_animation,
+            smoke_animation,
+            smoke_offset,
         }
     }
 
     /// Determine whether the train has animated accross the screen
     fn complete(&self) -> bool {
-        self.x < -((self.view_width.expect("Unknown view width") + self.animation.width()) as i32)
+        let max_width = std::cmp::max(self.train_animation.width(), self.smoke_animation.width());
+        self.x < -((self.view_width.expect("Unknown view width") + max_width) as i32)
     }
 
     /// Render the current state to the given printer
     fn render(&self, printer: &cursive::Printer) {
         let x_offset = self.view_width.expect("Unknown view width") as i32 + self.x;
 
-        // Center the animation vertically
+        // Center the train animation vertically
         let middle_row = self.view_height.expect("Unknown view height") as i32 / 2;
-        let animation_height = self.animation.height() as i32;
-        let y_offset = middle_row - animation_height/2 + self.y;
+        let animation_height = self.train_animation.height() as i32;
+        let y_offset = middle_row - animation_height / 2 + self.y;
 
-        for (i, line) in self.animation.current_frame().text.iter().enumerate() {
+        for (i, line) in self.smoke_animation.current_frame().text.iter().enumerate() {
+            let x_offset = x_offset + self.smoke_offset as i32;
+            let (line, x_offset) = if x_offset < 0 {
+                let x_offset = (-x_offset) as usize;
+                if x_offset > line.len() {
+                    ("".into(), 0)
+                } else {
+                    ((&line[x_offset..]).to_string(), 0)
+                }
+            } else {
+                (line.clone(), x_offset)
+            };
+
+            printer.print(
+                (
+                    x_offset + self.smoke_offset as i32,
+                    y_offset + i as i32 - self.smoke_animation.height() as i32,
+                ),
+                &line,
+            );
+        }
+
+        for (i, line) in self.train_animation.current_frame().text.iter().enumerate() {
             // Get the subsection of the line that should be renderd based
             // on the view
             // TODO: this should be cleaned up
@@ -183,7 +210,8 @@ impl TrainState {
     /// animation on the canvas
     fn step(&mut self) {
         self.x -= 1;
-        self.animation.step();
+        self.train_animation.step();
+        self.smoke_animation.step();
     }
 }
 
@@ -221,12 +249,12 @@ fn main() {
 
     let state = TrainState::new(
         Animation::from_str(1, &trains::default_train_animation()).expect("Invalid animation"),
+        Animation::from_str(5, &trains::default_smoke_animation()).expect("Invalid animation"),
+        2,
     );
 
     let canvas = Canvas::new(state)
-        .with_draw(|state, printer| {
-            state.render(printer)
-        })
+        .with_draw(|state, printer| state.render(printer))
         .with_on_event(|state, event| match event {
             cursive::event::Event::Refresh => {
                 state.step();
