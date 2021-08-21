@@ -122,7 +122,7 @@ pub fn default_train() -> TrainDefinition {
 }
 
 
-pub const LOGO_TRAIN_SMOKESTACK_OFFSET: usize = 5;
+pub const LOGO_TRAIN_SMOKESTACK_OFFSET: usize = 3;
 pub const LOGO_TRAIN_ANIMATION_SPEED: usize = 1;
 const LOGO_TRAIN_TOP: &'static str =
     concat!("     ++      +------ \n",
