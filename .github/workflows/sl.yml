@@ -7,6 +7,7 @@ jobs:
     runs-on: ubuntu-18.04
     container:
       image: adamschwalm/sl-build:3
+      options: "-u 0:0"
     steps:
     - uses: actions/checkout@v2
     - name: Check formatting
@@ -17,6 +18,7 @@ jobs:
     runs-on: ubuntu-18.04
     container:
       image: adamschwalm/sl-build:3
+      options: "-u 0:0"
     steps:
       - uses: actions/checkout@v2
       - name: Running Unittests
@@ -27,6 +29,7 @@ jobs:
     runs-on: ubuntu-18.04
     container:
       image: adamschwalm/sl-build:3
+      options: "-u 0:0"
     steps:
       - uses: actions/checkout@v2
       - name: Packaging
