@@ -1,5 +1,6 @@
 #[derive(Debug)]
 pub enum Error {
+    Io(std::io::Error),
     InvalidAnimationSpeed,
     EmptyAnimation,
     EmptyFrame,

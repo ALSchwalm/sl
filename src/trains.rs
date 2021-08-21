@@ -1,9 +1,32 @@
+use std::fs::File;
+use std::io::prelude::*;
+use std::path::Path;
+use crate::error::{Error, Result};
+
 pub struct TrainDefinition {
     pub train: String,
     pub train_animation_speed: usize,
     pub smoke: Option<String>,
     pub smoke_offset: Option<usize>,
     pub smoke_animation_speed: Option<usize>
+}
+
+impl TrainDefinition {
+    pub fn from_file(path: impl AsRef<Path>) -> Result<TrainDefinition> {
+        let mut file = File::open(path).map_err(Error::Io)?;
+        let mut contents = String::new();
+        file.read_to_string(&mut contents).map_err(Error::Io)?;
+        Ok(TrainDefinition {
+            train: contents,
+
+            // NOTE: train speed is not configurable when reading from file,
+            // also smoke is not supported
+            train_animation_speed: 1,
+            smoke: None,
+            smoke_offset: None,
+            smoke_animation_speed: None
+        })
+    }
 }
 
 pub const DEFAULT_TRAIN_SMOKESTACK_OFFSET: usize = 5;
