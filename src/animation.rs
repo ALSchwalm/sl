@@ -8,6 +8,10 @@ pub struct Frame {
 impl Frame {
     /// Create a frame of animation from a single string
     fn from_str(text: &str) -> Result<Self> {
+        if text.len() == 0 {
+            return Err(Error::EmptyFrame);
+        }
+
         Ok(Self {
             text: text
                 .split("\n")
@@ -37,7 +41,11 @@ impl Animation {
     ///
     /// Frames are expected to be delimited by two newlines. An
     /// error is returned if no frames are found
-    pub fn from_str(speed: usize, text: &str) -> Result<Self> {
+    pub fn new(speed: usize, text: &str) -> Result<Self> {
+        if speed == 0 {
+            return Err(Error::InvalidAnimationSpeed);
+        }
+
         let frames = text
             .split("\n\n\n")
             .map(|block| Frame::from_str(block))
@@ -86,5 +94,86 @@ impl Animation {
             .map(|frame| frame.height())
             .max()
             .expect("Unable to get frame height")
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn basic_frame_creation() {
+        let frame = Frame::from_str("simple contents");
+        assert!(frame.is_ok());
+    }
+
+    #[test]
+    fn frame_width_calc() {
+        let frame = Frame::from_str("simple contents").unwrap();
+        assert_eq!(frame.width(), 15);
+
+        let frame = Frame::from_str(
+            "some long line
+more
+short
+lines",
+        )
+        .unwrap();
+
+        assert_eq!(frame.width(), 14);
+    }
+
+    #[test]
+    fn frame_height_calc() {
+        let frame = Frame::from_str("simple contents").unwrap();
+        assert_eq!(frame.height(), 1);
+
+        let frame = Frame::from_str(
+            "some long line
+more
+short
+lines",
+        )
+        .unwrap();
+
+        assert_eq!(frame.height(), 4);
+    }
+
+    const TEST_ANIMATION_TEXT: &'static str = "frame 1 body
+
+
+frame 2 body
+more text in frame two";
+
+    #[test]
+    fn basic_animation_creation() {
+        let animation = Animation::new(1, TEST_ANIMATION_TEXT);
+
+        assert!(animation.is_ok());
+        assert_eq!(animation.unwrap().frames.len(), 2);
+    }
+
+    #[test]
+    fn animation_creation_requires_frames() {
+        let animation = Animation::new(1, "");
+        assert!(animation.is_err());
+    }
+
+    #[test]
+    fn animation_creation_requires_speed() {
+        let animation = Animation::new(0, TEST_ANIMATION_TEXT);
+        assert!(animation.is_err());
+    }
+
+    #[test]
+    fn animation_height_calc() {
+        let animation = Animation::new(1, TEST_ANIMATION_TEXT).unwrap();
+        assert_eq!(animation.height(), 2)
+    }
+
+    #[test]
+    fn animation_width_calc() {
+        let animation = Animation::new(1, TEST_ANIMATION_TEXT).unwrap();
+        assert_eq!(animation.width(), 22);
     }
 }

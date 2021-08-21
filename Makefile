@@ -18,5 +18,9 @@ clean:
 fmt:
 	cargo fmt
 
+.PHONY: test
+test:
+	cargo test
+
 .PHONY: distclean
 distclean: clean
