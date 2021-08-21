@@ -3,6 +3,8 @@ VERSION=6.0.0
 BIN_PATH=target/release/sl
 DEB_PATH=sl-$(VERSION)-1.deb
 
+DOCKER_IMG=adamschwalm/sl-build:2
+
 .PHONY: all
 all: sl
 
@@ -24,6 +26,10 @@ clean:
 .PHONY: fmt
 fmt:
 	cargo fmt
+
+.PHONY: check-fmt
+check-fmt:
+	cargo fmt --all -- --check
 
 .PHONY: test
 test:
@@ -48,3 +54,10 @@ $(DEB_PATH): $(BIN_PATH)
 
 .PHONY: distclean
 distclean: clean
+
+.PHONY: docker-shell
+docker-shell:
+	docker run -it --rm -v $(CURDIR):/src $(DOCKER_IMG) /bin/bash
+
+docker-%:
+	docker run -it --rm -v $(CURDIR):/src $(DOCKER_IMG) $(MAKE) $*

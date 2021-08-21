@@ -8,4 +8,6 @@ RUN gem install fpm
 # Install rustup for rust
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
 
+ENV PATH="/root/.cargo/bin:$PATH"
+
 WORKDIR /src

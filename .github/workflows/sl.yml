@@ -1,0 +1,34 @@
+name: SL
+
+on: [push, pull_request]
+
+jobs:
+  Check:
+    runs-on: ubuntu-18.04
+    container:
+      image: adamschwalm/sl-build:2
+    steps:
+    - uses: actions/checkout@v2
+    - name: Check formatting
+      run: |
+        make check-fmt
+
+  Unittest:
+    runs-on: ubuntu-18.04
+    container:
+      image: adamschwalm/sl-build:2
+    steps:
+      - uses: actions/checkout@v2
+      - name: Running Unittests
+      run: |
+        make test
+
+  Package:
+    runs-on: ubuntu-18.04
+    container:
+      image: adamschwalm/sl-build:2
+    steps:
+      - uses: actions/checkout@v2
+      - name: Packaging
+      run: |
+        make pkg
