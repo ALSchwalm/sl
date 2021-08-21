@@ -121,33 +121,42 @@ impl Animation {
     }
 }
 
+struct SmokeState {
+    animation: Animation,
+    offset: usize,
+}
+
 struct TrainState {
     view_width: Option<usize>,
     view_height: Option<usize>,
     x: i32,
     y: i32,
     train_animation: Animation,
-    smoke_animation: Animation,
-    smoke_offset: usize,
+    smoke: Option<SmokeState>,
 }
 
 impl TrainState {
     /// Create a new TrainState with the given animation
-    fn new(train_animation: Animation, smoke_animation: Animation, smoke_offset: usize) -> Self {
+    fn new(train_animation: Animation, smoke: Option<(Animation, usize)>) -> Self {
         TrainState {
             view_width: None,
             view_height: None,
             x: 0,
             y: 0,
             train_animation,
-            smoke_animation,
-            smoke_offset,
+            smoke: smoke.map(|(animation, offset)| SmokeState { animation, offset }),
         }
     }
 
     /// Determine whether the train has animated accross the screen
     fn complete(&self) -> bool {
-        let max_width = std::cmp::max(self.train_animation.width(), self.smoke_animation.width());
+        let max_width = std::cmp::max(
+            self.train_animation.width(),
+            self.smoke
+                .as_ref()
+                .map(|smoke_state| smoke_state.animation.width())
+                .unwrap_or(0),
+        );
         self.x < -((self.view_width.expect("Unknown view width") + max_width) as i32)
     }
 
@@ -179,15 +188,23 @@ impl TrainState {
         let animation_height = self.train_animation.height() as i32;
         let y_offset = middle_row - animation_height / 2 + self.y;
 
-        for (i, line) in self.smoke_animation.current_frame().text.iter().enumerate() {
-            self.print_str_at(
-                line,
-                printer,
-                (
-                    x_offset + self.smoke_offset as i32,
-                    y_offset + i as i32 - self.smoke_animation.height() as i32,
-                ),
-            );
+        if let Some(smoke_state) = &self.smoke {
+            for (i, line) in smoke_state
+                .animation
+                .current_frame()
+                .text
+                .iter()
+                .enumerate()
+            {
+                self.print_str_at(
+                    line,
+                    printer,
+                    (
+                        x_offset + smoke_state.offset as i32,
+                        y_offset + i as i32 - smoke_state.animation.height() as i32,
+                    ),
+                );
+            }
         }
 
         for (i, line) in self.train_animation.current_frame().text.iter().enumerate() {
@@ -202,7 +219,10 @@ impl TrainState {
     fn step(&mut self) {
         self.x -= 1;
         self.train_animation.step();
-        self.smoke_animation.step();
+
+        if let Some(smoke_state) = &mut self.smoke {
+            smoke_state.animation.step();
+        }
     }
 }
 
@@ -240,8 +260,10 @@ fn main() {
 
     let state = TrainState::new(
         Animation::from_str(1, &trains::default_train_animation()).expect("Invalid animation"),
-        Animation::from_str(5, &trains::default_smoke_animation()).expect("Invalid animation"),
-        trains::DEFAULT_TRAIN_SMOKESTACK_OFFSET,
+        Some((
+            Animation::from_str(5, &trains::default_smoke_animation()).expect("Invalid animation"),
+            trains::DEFAULT_TRAIN_SMOKESTACK_OFFSET,
+        )),
     );
 
     let canvas = Canvas::new(state)
