@@ -1,3 +1,4 @@
+use clap::{App, Arg};
 use cursive::event::Callback;
 use cursive::theme::{BorderStyle, Color::*, Palette, PaletteColor::*};
 use cursive::views::Canvas;
@@ -9,7 +10,7 @@ mod error;
 mod trains;
 
 use animation::Animation;
-use error::Result;
+use error::{Error, Result};
 
 struct SmokeState {
     animation: Animation,
@@ -161,15 +162,39 @@ fn init_cursive() -> cursive::CursiveRunnable {
     siv
 }
 
-fn main() {
+fn main() -> Result<()> {
+    let matches = App::new("SL")
+        .version("6.0")
+        .about("")
+        .arg(
+            Arg::with_name("number")
+                .short("n")
+                .long("number")
+                .value_name("NUM")
+                .help("Select a specific animation to run")
+                .takes_value(true),
+        )
+        .get_matches();
+
     let mut siv = init_cursive();
 
     let builtins = trains::builtin_trains();
 
     let mut rng = thread_rng();
-    let train_idx: usize = rng.gen_range(0..builtins.len());
+    let random_train_idx: usize = rng.gen_range(0..builtins.len());
 
-    let state = TrainState::new(&builtins[train_idx]).expect("Invalid train definition");
+    let train_idx = matches.value_of("number");
+    let train_idx = train_idx
+        .map(str::parse::<usize>)
+        .transpose()
+        .map_err(Error::IntParseError)?
+        .unwrap_or(random_train_idx);
+
+    if train_idx >= builtins.len() {
+        return Err(Error::InvalidTrainIndex(train_idx));
+    }
+
+    let state = TrainState::new(&builtins[train_idx])?;
 
     let canvas = Canvas::new(state)
         .with_draw(|state, printer| state.render(printer))
@@ -198,4 +223,6 @@ fn main() {
 
     // Run the event loop
     siv.run();
+
+    Ok(())
 }

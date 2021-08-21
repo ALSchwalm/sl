@@ -43,7 +43,7 @@ impl Animation {
     /// error is returned if no frames are found
     pub fn new(speed: usize, text: &str) -> Result<Self> {
         if speed == 0 {
-            return Err(Error::InvalidAnimationSpeed);
+            return Err(Error::InvalidAnimationSpeed(speed));
         }
 
         let frames = text
