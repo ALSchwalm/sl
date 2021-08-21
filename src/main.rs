@@ -151,9 +151,6 @@ fn init_cursive() -> cursive::CursiveRunnable {
 
     siv.set_theme(theme);
 
-    // We can quit by pressing `q` (for now)
-    siv.add_global_callback('q', Cursive::quit);
-
     // Don't allowt the usual suspects to force an exit
     siv.clear_global_callbacks(cursive::event::Event::Exit);
     siv.clear_global_callbacks(cursive::event::Event::CtrlChar('c'));
