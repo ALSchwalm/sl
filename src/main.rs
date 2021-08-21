@@ -142,7 +142,6 @@ impl TrainState {
         let train_animation =
             Animation::from_str(definition.train_animation_speed, &definition.train)?;
         let smoke = definition.smoke.as_ref().map(|smoke| SmokeState {
-
             //TODO: this should propagate the error up instead of panicing
             animation: Animation::from_str(definition.smoke_animation_speed.unwrap_or(1), &smoke)
                 .expect("Invalid animation"),
