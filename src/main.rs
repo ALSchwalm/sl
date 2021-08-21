@@ -6,7 +6,6 @@ use rand::{thread_rng, Rng};
 
 mod animation;
 mod error;
-#[rustfmt::skip]
 mod trains;
 
 use animation::Animation;
