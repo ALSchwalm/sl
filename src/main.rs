@@ -31,12 +31,11 @@ impl TrainState {
     fn new(definition: &trains::TrainDefinition) -> Result<Self> {
         let train_animation =
             Animation::from_str(definition.train_animation_speed, &definition.train)?;
-        let smoke = definition.smoke.as_ref().map(|smoke| SmokeState {
-            //TODO: this should propagate the error up instead of panicing
-            animation: Animation::from_str(definition.smoke_animation_speed.unwrap_or(1), &smoke)
-                .expect("Invalid animation"),
+
+        let smoke = definition.smoke.as_ref().map(|smoke| Ok(SmokeState {
+            animation: Animation::from_str(definition.smoke_animation_speed.unwrap_or(1), &smoke)?,
             offset: definition.smoke_offset.unwrap_or(0),
-        });
+        })).transpose()?;
 
         Ok(TrainState {
             view_width: None,
