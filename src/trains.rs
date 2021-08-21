@@ -73,16 +73,23 @@ const DEFAULT_SMOKE: [&'static str; 2] = [
 (    )",
 ];
 
-pub fn default_train() -> TrainDefinition {
+fn build_composite_train(engine_top: &str,
+                         engine_wheels: &[&str],
+                         car: &str,
+                         smoke: &[&str],
+                         train_animation_speed: usize,
+                         smoke_animation_speed: usize,
+                         smoke_offset: usize
+) -> TrainDefinition {
     // Attach the wheels to the train
-    let default_engine = DEFAULT_TRAIN_WHEELS
+    let default_engine = engine_wheels
         .iter()
-        .map(|wheels| DEFAULT_TRAIN_TOP.to_string() + wheels);
+        .map(|wheels| engine_top.to_string() + wheels);
 
     // Attach the car to the engine
     let default_train_frames = default_engine.map(|frame| {
             frame.split("\n")
-                .zip(DEFAULT_TRAIN_CAR.split("\n"))
+                .zip(car.split("\n"))
                 .map(|(train_line, cart_line)|{
                     train_line.to_string() + cart_line
                 }).collect::<Vec<_>>().join("\n")
@@ -93,13 +100,78 @@ pub fn default_train() -> TrainDefinition {
         .collect::<Vec<_>>()
         .join("\n\n\n");
 
-    let smoke = DEFAULT_SMOKE.join("\n\n\n");
+    let smoke = smoke.join("\n\n\n");
 
     TrainDefinition {
         train,
-        train_animation_speed: DEFAULT_TRAIN_ANIMATION_SPEED,
+        train_animation_speed,
         smoke: Some(smoke),
-        smoke_offset: Some(DEFAULT_TRAIN_SMOKESTACK_OFFSET),
-        smoke_animation_speed: Some(DEFAULT_TRAIN_SMOKE_SPEED)
+        smoke_offset: Some(smoke_offset),
+        smoke_animation_speed: Some(smoke_animation_speed)
     }
+}
+
+pub fn default_train() -> TrainDefinition {
+    build_composite_train(DEFAULT_TRAIN_TOP,
+                          &DEFAULT_TRAIN_WHEELS,
+                          DEFAULT_TRAIN_CAR,
+                          &DEFAULT_SMOKE,
+                          DEFAULT_TRAIN_ANIMATION_SPEED,
+                          DEFAULT_TRAIN_SMOKE_SPEED,
+                          DEFAULT_TRAIN_SMOKESTACK_OFFSET)
+}
+
+
+pub const LOGO_TRAIN_SMOKESTACK_OFFSET: usize = 5;
+pub const LOGO_TRAIN_ANIMATION_SPEED: usize = 1;
+const LOGO_TRAIN_TOP: &'static str =
+    concat!("     ++      +------ \n",
+            "     ||      |+-+ |  \n",
+            "   /---------|| | |  \n",
+            "  + ========  +-+ |  \n");
+
+const LOGO_TRAIN_WHEELS: [&'static str; 6] = [
+    concat!(" _|--O========O~\\-+  \n",
+            "//// \\_/      \\_/    "),
+
+    concat!(" _|--/O========O\\-+  \n",
+            "//// \\_/      \\_/    "),
+
+    concat!(" _|--/~O========O-+  \n",
+            "//// \\_/      \\_/    "),
+
+    concat!(" _|--/~\\------/~\\-+  \n",
+            "//// \\_O========O    "),
+
+    concat!(" _|--/~\\------/~\\-+  \n",
+            "//// \\O========O/    "),
+
+    concat!(" _|--/~\\------/~\\-+  \n",
+            "//// O========O_/    "),
+];
+
+const LOGO_CARS: &'static str =
+    concat!("____                 ____________________ ____________________ \n",
+            "|   \\@@@@@@@@@@@     |  ___ ___ ___ ___ | |  ___ ___ ___ ___ | \n",
+            "|    \\@@@@@@@@@@@@@_ |  |_| |_| |_| |_| | |  |_| |_| |_| |_| | \n",
+            "|                  | |__________________| |__________________| \n",
+            "|__________________| |__________________| |__________________| \n",
+            "   (O)       (O)        (O)       (O)        (O)       (O)     "
+    );
+
+pub fn logo_train() -> TrainDefinition {
+    build_composite_train(LOGO_TRAIN_TOP,
+                          &LOGO_TRAIN_WHEELS,
+                          LOGO_CARS,
+                          &DEFAULT_SMOKE,
+                          LOGO_TRAIN_ANIMATION_SPEED,
+                          DEFAULT_TRAIN_SMOKE_SPEED,
+                          LOGO_TRAIN_SMOKESTACK_OFFSET)
+}
+
+pub fn builtin_trains() -> Vec<TrainDefinition> {
+    vec![
+        default_train(),
+        logo_train()
+    ]
 }

@@ -3,6 +3,7 @@ use cursive::theme::{BaseColor, BorderStyle, Color, ColorStyle, Palette};
 use cursive::theme::{BaseColor::*, Color::*, PaletteColor::*};
 use cursive::views::Canvas;
 use cursive::Cursive;
+use rand::{thread_rng, Rng};
 
 #[rustfmt::skip]
 mod trains;
@@ -137,7 +138,7 @@ struct TrainState {
 
 impl TrainState {
     /// Create a new TrainState with the given animation
-    fn new(definition: trains::TrainDefinition) -> Result<Self> {
+    fn new(definition: &trains::TrainDefinition) -> Result<Self> {
         let train_animation =
             Animation::from_str(definition.train_animation_speed, &definition.train)?;
         let smoke = definition.smoke.as_ref().map(|smoke| SmokeState {
@@ -268,7 +269,12 @@ fn init_cursive() -> cursive::CursiveRunnable {
 fn main() {
     let mut siv = init_cursive();
 
-    let state = TrainState::new(trains::default_train()).expect("Invalid train definition");
+    let builtins = trains::builtin_trains();
+
+    let mut rng = thread_rng();
+    let train_idx: usize = rng.gen_range(0..builtins.len());
+
+    let state = TrainState::new(&builtins[train_idx]).expect("Invalid train definition");
 
     let canvas = Canvas::new(state)
         .with_draw(|state, printer| state.render(printer))
