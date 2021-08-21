@@ -3,7 +3,7 @@ VERSION=6.0.0
 BIN_PATH=target/release/sl
 DEB_PATH=sl-$(VERSION)-1.deb
 
-DOCKER_IMG=adamschwalm/sl-build:2
+DOCKER_IMG=adamschwalm/sl-build:3
 
 .PHONY: all
 all: sl
