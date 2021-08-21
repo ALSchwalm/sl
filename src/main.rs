@@ -150,6 +150,25 @@ impl TrainState {
         self.x < -((self.view_width.expect("Unknown view width") + max_width) as i32)
     }
 
+    /// Print a string at the given coordinate
+    ///
+    /// This method differs from the Printer::print method because it allows
+    /// negative coordinates more correctly. Printer::print will not print
+    /// the entire string if the 'x' coordinate is negative; this method will
+    /// instead print any visible portions.
+    fn print_str_at(&self, text: impl AsRef<str>, printer: &cursive::Printer, coord: (i32, i32)) {
+        if coord.0 > 0 {
+            printer.print(coord, text.as_ref());
+        } else {
+            let hidden_chars = -coord.0 as usize;
+            if hidden_chars >= text.as_ref().len() {
+                return;
+            }
+            let line = &text.as_ref()[hidden_chars..];
+            printer.print((0, coord.1), line);
+        }
+    }
+
     /// Render the current state to the given printer
     fn render(&self, printer: &cursive::Printer) {
         let x_offset = self.view_width.expect("Unknown view width") as i32 + self.x;
@@ -160,47 +179,17 @@ impl TrainState {
         let y_offset = middle_row - animation_height / 2 + self.y;
 
         for (i, line) in self.smoke_animation.current_frame().text.iter().enumerate() {
-            let x_offset = x_offset + self.smoke_offset as i32;
-            let (line, x_offset) = if x_offset < 0 {
-                let x_offset = (-x_offset) as usize;
-                if x_offset > line.len() {
-                    ("".into(), 0)
-                } else {
-                    ((&line[x_offset..]).to_string(), 0)
-                }
-            } else {
-                (line.clone(), x_offset)
-            };
-
-            printer.print(
-                (
-                    x_offset + self.smoke_offset as i32,
-                    y_offset + i as i32 - self.smoke_animation.height() as i32,
-                ),
-                &line,
-            );
+            self.print_str_at(line, printer, (
+                x_offset + self.smoke_offset as i32,
+                y_offset + i as i32 - self.smoke_animation.height() as i32,
+            ));
         }
 
         for (i, line) in self.train_animation.current_frame().text.iter().enumerate() {
-            // Get the subsection of the line that should be renderd based
-            // on the view
-            // TODO: this should be cleaned up
-            let (line, x_offset) = if x_offset < 0 {
-                let x_offset = (-x_offset) as usize;
-                if x_offset > line.len() {
-                    ("".into(), 0)
-                } else {
-                    ((&line[x_offset..]).to_string(), 0)
-                }
-            } else {
-                (line.clone(), x_offset)
-            };
-
-            // NOTE: we don't need to handle negative y_offset+i here,
-            // because cursive already handles that as expected (the
-            // line that is 'off screen' will not be rendered)
-
-            printer.print((x_offset, y_offset + i as i32), &line);
+            self.print_str_at(line, printer, (
+                x_offset,
+                y_offset + i as i32,
+            ));
         }
     }
 
