@@ -1,5 +1,5 @@
 use cursive::event::Callback;
-use cursive::theme::{BorderStyle, Palette, Color::*, PaletteColor::*};
+use cursive::theme::{BorderStyle, Color::*, Palette, PaletteColor::*};
 use cursive::views::Canvas;
 use cursive::Cursive;
 use rand::{thread_rng, Rng};
@@ -10,7 +10,7 @@ mod error;
 mod trains;
 
 use animation::Animation;
-use error::{Result};
+use error::Result;
 
 struct SmokeState {
     animation: Animation,
@@ -29,13 +29,21 @@ struct TrainState {
 impl TrainState {
     /// Create a new TrainState with the given animation
     fn new(definition: &trains::TrainDefinition) -> Result<Self> {
-        let train_animation =
-            Animation::from_str(definition.train_animation_speed, &definition.train)?;
+        let train_animation = Animation::new(definition.train_animation_speed, &definition.train)?;
 
-        let smoke = definition.smoke.as_ref().map(|smoke| Ok(SmokeState {
-            animation: Animation::from_str(definition.smoke_animation_speed.unwrap_or(1), &smoke)?,
-            offset: definition.smoke_offset.unwrap_or(0),
-        })).transpose()?;
+        let smoke = definition
+            .smoke
+            .as_ref()
+            .map(|smoke| {
+                Ok(SmokeState {
+                    animation: Animation::new(
+                        definition.smoke_animation_speed.unwrap_or(1),
+                        &smoke,
+                    )?,
+                    offset: definition.smoke_offset.unwrap_or(0),
+                })
+            })
+            .transpose()?;
 
         Ok(TrainState {
             view_width: None,
