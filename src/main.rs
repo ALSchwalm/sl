@@ -241,7 +241,7 @@ fn main() {
     let state = TrainState::new(
         Animation::from_str(1, &trains::default_train_animation()).expect("Invalid animation"),
         Animation::from_str(5, &trains::default_smoke_animation()).expect("Invalid animation"),
-        2,
+        trains::DEFAULT_TRAIN_SMOKESTACK_OFFSET,
     );
 
     let canvas = Canvas::new(state)

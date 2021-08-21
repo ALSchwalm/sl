@@ -1,4 +1,5 @@
 
+pub const DEFAULT_TRAIN_SMOKESTACK_OFFSET: usize = 5;
 const DEFAULT_TRAIN_TOP: &'static str =
     concat!("      ====        ________                ___________ \n",
             "  _D _|  |_______/        \\__I_I_____===__|_________| \n",
