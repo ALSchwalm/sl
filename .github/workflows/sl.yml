@@ -38,5 +38,5 @@ jobs:
       - name: Artifact deb build
         uses: actions/upload-artifact@v2
         with:
-          name: deb-package
+          name: sl-deb-release
           path: "*.deb"
