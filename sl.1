@@ -3,34 +3,42 @@
 .\"
 .\"	@(#)sl.1
 .\"
-.TH SL 1 "March 31, 2014"
+.TH SL 1 "August 21, 2021"
 .SH NAME
 sl \- cure your bad habit of mistyping
 .SH SYNOPSIS
 .B sl
 [
-.B \-alFc
+.B \-nd
 ]
 .SH DESCRIPTION
 .B sl
 is a highly advanced animation program for curing your bad habit of mistyping.
 .PP
 .TP
-.B \-a
-An accident is occurring. People cry for help.
+\fB\-n\fR, \fB\-\-number\fR[=\fI\,NUM\/\fR]
+Select a specific train instead of a random choice. This option cannot be used
+with \fB\-\-directory\fR
 .TP
-.B \-l
-Little version.
-.TP
-.B \-F
-It flies like the galaxy express 999.
-.TP
-.B \-c
-C51 appears instead of D51.
+\fB\-d\fR, \fB\-\-directory\fR[=\fI\,DIR\/\fR]
+Select a random train from DIR. Train files must be in the \fBTRAIN FILE FORMAT\R
+
+.SH TRAIN FILE FORMAT
+When specifying the \fB--directory\fR flag, the user must specify a directory
+that contains files with the extension \fB.train\fR, which is described here.
+A \fB.train\fR file is an animation that will play as the train moves across
+the screen. It is made of a number of \fBframes\fR which are separated by
+three newlines characters.
+
+Frames will play at a fixed rate as the train moves from right to left
+across the screen. It is not required that each frame be of the same size,
+however, frames with no contents are not allowed. Similarly, animations with
+no frames are not allowed (e.g., an empty file is not a valid train file).
+
 .PP
 .SH SEE ALSO
 .BR ls (1)
 .SH BUGS
 It sometimes lists directory contents.
 .SH AUTHOR
-Toyoda Masashi (mtoyoda@acm.org)
+Toyoda Masashi (mtoyoda@acm.org), Adam Schwalm (adamschwalm@gmail.com)
