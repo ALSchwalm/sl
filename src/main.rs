@@ -1,126 +1,16 @@
 use cursive::event::Callback;
-use cursive::theme::{BaseColor, BorderStyle, Color, ColorStyle, Palette};
-use cursive::theme::{BaseColor::*, Color::*, PaletteColor::*};
+use cursive::theme::{BorderStyle, Palette, Color::*, PaletteColor::*};
 use cursive::views::Canvas;
 use cursive::Cursive;
 use rand::{thread_rng, Rng};
 
+mod animation;
+mod error;
 #[rustfmt::skip]
 mod trains;
 
-#[derive(Debug)]
-enum Error {
-    InvalidAnimation,
-    InvalidFrame,
-    EmptyAnimation,
-}
-
-type Result<T> = std::result::Result<T, Error>;
-
-/// A struct representing a single frame of animation
-struct Frame {
-    text: Vec<String>,
-}
-
-impl Frame {
-    /// Create a new frame of animation from the given lines of text
-    ///
-    /// This frame will be rendered with the lines left-aligned,
-    /// directly on top of each other.
-    fn new(text: Vec<String>) -> Result<Self> {
-        Ok(Self { text })
-    }
-
-    /// Create a frame of animation from a single string
-    fn from_str(text: &str) -> Result<Self> {
-        Ok(Self {
-            text: text
-                .split("\n")
-                .map(|line| line.to_string())
-                .collect::<Vec<_>>(),
-        })
-    }
-
-    fn width(&self) -> usize {
-        self.text.iter().map(|line| line.len()).max().unwrap_or(0)
-    }
-
-    fn height(&self) -> usize {
-        self.text.len()
-    }
-}
-
-struct Animation {
-    frames: Vec<Frame>,
-    current_frame_idx: usize,
-    speed: usize,
-    current_step: usize,
-}
-
-impl Animation {
-    /// Create a new animation from a list of frames
-    fn new(speed: usize, frames: Vec<Frame>) -> Result<Self> {
-        if frames.len() == 0 {
-            Err(Error::EmptyAnimation)
-        } else {
-            Ok(Self {
-                frames,
-                speed,
-                current_frame_idx: 0,
-                current_step: 0,
-            })
-        }
-    }
-
-    /// Create a new animation from a string
-    ///
-    /// Frames are expected to be delimited by two newlines
-    fn from_str(speed: usize, text: &str) -> Result<Self> {
-        let frames = text
-            .split("\n\n\n")
-            .map(|block| Frame::from_str(block))
-            .collect::<Result<Vec<_>>>()?;
-        Ok(Self {
-            frames,
-            speed,
-            current_frame_idx: 0,
-            current_step: 0,
-        })
-    }
-
-    /// Advance the animation. This may update the current frame depending
-    /// on the speed of the animation
-    fn step(&mut self) {
-        self.current_step += 1;
-        if self.current_step == self.speed {
-            self.current_frame_idx = (self.current_frame_idx + 1) % self.frames.len();
-            self.current_step = 0;
-        }
-    }
-
-    /// Get the current frame of the animation
-    fn current_frame(&self) -> &Frame {
-        &self.frames[self.current_frame_idx]
-    }
-
-    /// The maximum width of any frame in this animation
-    fn width(&self) -> usize {
-        self.frames
-            .iter()
-            .map(|frame| frame.width())
-            .max()
-            .expect("Unable to get frame width")
-    }
-
-    /// The maximum height of any frame in this animation
-    fn height(&self) -> usize {
-        self.frames
-            .iter()
-            .map(|frame| frame.height())
-            .max()
-            .expect("Unable to get frame height")
-    }
-}
+use animation::Animation;
+use error::{Result};
 
 struct SmokeState {
     animation: Animation,
