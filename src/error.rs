@@ -8,6 +8,7 @@ pub enum Error {
     EmptyFrame,
     InvalidTrainIndex(usize),
     IntParseError(std::num::ParseIntError),
+    NoTrainsFound,
 }
 
 impl Display for Error {
@@ -19,6 +20,7 @@ impl Display for Error {
             Error::EmptyFrame => write!(f, "Attempt to load animation frame with no contents"),
             Error::InvalidTrainIndex(idx) => write!(f, "Invalid train index '{}'", idx),
             Error::IntParseError(err) => write!(f, "Error while parsing integer: {}", err),
+            Error::NoTrainsFound => write!(f, "No trains found in provided path"),
         }
     }
 }

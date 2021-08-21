@@ -4,6 +4,8 @@ use cursive::theme::{BorderStyle, Color::*, Palette, PaletteColor::*};
 use cursive::views::Canvas;
 use cursive::Cursive;
 use rand::{thread_rng, Rng};
+use std::fs::read_dir;
+use std::path::Path;
 
 mod animation;
 mod error;
@@ -162,8 +164,36 @@ fn init_cursive() -> cursive::CursiveRunnable {
     siv
 }
 
+/// Load a random train from a directory
+fn load_random_file(
+    rng: &mut impl rand::Rng,
+    path: impl AsRef<Path>,
+) -> Result<trains::TrainDefinition> {
+    let candidates = read_dir(path)
+        .map_err(Error::Io)?
+        .filter_map(|entry| entry.ok())
+        .filter_map(|entry| {
+            entry.path().extension().and_then(|extension| {
+                if extension.to_string_lossy() == "train" {
+                    Some(entry.path())
+                } else {
+                    None
+                }
+            })
+        })
+        .collect::<Vec<_>>();
+
+    if candidates.len() == 0 {
+        return Err(Error::NoTrainsFound);
+    }
+
+    let choice = rng.gen_range(0..candidates.len());
+
+    trains::TrainDefinition::from_file(&candidates[choice])
+}
+
 fn main() -> Result<()> {
-    let matches = App::new("SL")
+    let cmdline = App::new("SL")
         .version("6.0")
         .about("")
         .arg(
@@ -172,6 +202,15 @@ fn main() -> Result<()> {
                 .long("number")
                 .value_name("NUM")
                 .help("Select a specific animation to run")
+                .conflicts_with("dir")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("dir")
+                .short("d")
+                .long("directory")
+                .value_name("DIR")
+                .help("Load a random train from a directory")
                 .takes_value(true),
         )
         .get_matches();
@@ -183,18 +222,23 @@ fn main() -> Result<()> {
     let mut rng = thread_rng();
     let random_train_idx: usize = rng.gen_range(0..builtins.len());
 
-    let train_idx = matches.value_of("number");
-    let train_idx = train_idx
-        .map(str::parse::<usize>)
-        .transpose()
-        .map_err(Error::IntParseError)?
-        .unwrap_or(random_train_idx);
+    let state = if cmdline.is_present("dir") {
+        let definition = load_random_file(&mut rng, cmdline.value_of("dir").unwrap())?;
+        TrainState::new(&definition)?
+    } else {
+        let train_idx = cmdline.value_of("number");
+        let train_idx = train_idx
+            .map(str::parse::<usize>)
+            .transpose()
+            .map_err(Error::IntParseError)?
+            .unwrap_or(random_train_idx);
 
-    if train_idx >= builtins.len() {
-        return Err(Error::InvalidTrainIndex(train_idx));
-    }
+        if train_idx >= builtins.len() {
+            return Err(Error::InvalidTrainIndex(train_idx));
+        }
 
-    let state = TrainState::new(&builtins[train_idx])?;
+        TrainState::new(&builtins[train_idx])?
+    };
 
     let canvas = Canvas::new(state)
         .with_draw(|state, printer| state.render(printer))
