@@ -4,6 +4,7 @@ use cursive::theme::{BaseColor::*, Color::*, PaletteColor::*};
 use cursive::views::Canvas;
 use cursive::Cursive;
 
+#[rustfmt::skip]
 mod trains;
 
 #[derive(Debug)]
@@ -179,17 +180,18 @@ impl TrainState {
         let y_offset = middle_row - animation_height / 2 + self.y;
 
         for (i, line) in self.smoke_animation.current_frame().text.iter().enumerate() {
-            self.print_str_at(line, printer, (
-                x_offset + self.smoke_offset as i32,
-                y_offset + i as i32 - self.smoke_animation.height() as i32,
-            ));
+            self.print_str_at(
+                line,
+                printer,
+                (
+                    x_offset + self.smoke_offset as i32,
+                    y_offset + i as i32 - self.smoke_animation.height() as i32,
+                ),
+            );
         }
 
         for (i, line) in self.train_animation.current_frame().text.iter().enumerate() {
-            self.print_str_at(line, printer, (
-                x_offset,
-                y_offset + i as i32,
-            ));
+            self.print_str_at(line, printer, (x_offset, y_offset + i as i32));
         }
     }
 
