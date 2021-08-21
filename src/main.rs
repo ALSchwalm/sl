@@ -137,15 +137,25 @@ struct TrainState {
 
 impl TrainState {
     /// Create a new TrainState with the given animation
-    fn new(train_animation: Animation, smoke: Option<(Animation, usize)>) -> Self {
-        TrainState {
+    fn new(definition: trains::TrainDefinition) -> Result<Self> {
+        let train_animation =
+            Animation::from_str(definition.train_animation_speed, &definition.train)?;
+        let smoke = definition.smoke.as_ref().map(|smoke| SmokeState {
+
+            //TODO: this should propagate the error up instead of panicing
+            animation: Animation::from_str(definition.smoke_animation_speed.unwrap_or(1), &smoke)
+                .expect("Invalid animation"),
+            offset: definition.smoke_offset.unwrap_or(0),
+        });
+
+        Ok(TrainState {
             view_width: None,
             view_height: None,
             x: 0,
             y: 0,
             train_animation,
-            smoke: smoke.map(|(animation, offset)| SmokeState { animation, offset }),
-        }
+            smoke,
+        })
     }
 
     /// Determine whether the train has animated accross the screen
@@ -258,13 +268,7 @@ fn init_cursive() -> cursive::CursiveRunnable {
 fn main() {
     let mut siv = init_cursive();
 
-    let state = TrainState::new(
-        Animation::from_str(1, &trains::default_train_animation()).expect("Invalid animation"),
-        Some((
-            Animation::from_str(5, &trains::default_smoke_animation()).expect("Invalid animation"),
-            trains::DEFAULT_TRAIN_SMOKESTACK_OFFSET,
-        )),
-    );
+    let state = TrainState::new(trains::default_train()).expect("Invalid train definition");
 
     let canvas = Canvas::new(state)
         .with_draw(|state, printer| state.render(printer))
