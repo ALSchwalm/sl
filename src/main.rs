@@ -203,6 +203,24 @@ fn main() -> Result<()> {
                 .takes_value(true),
         )
         .arg(
+            Arg::with_name("c51")
+                .short("c")
+                .long("c51")
+                .help("Show the C51 train")
+                .conflicts_with("number")
+                .conflicts_with("dir")
+                .conflicts_with("logo"),
+        )
+        .arg(
+            Arg::with_name("logo")
+                .short("l")
+                .long("logo")
+                .help("Show the LOGO train")
+                .conflicts_with("number")
+                .conflicts_with("dir")
+                .conflicts_with("c51"),
+        )
+        .arg(
             Arg::with_name("dir")
                 .short("d")
                 .long("directory")
@@ -219,7 +237,11 @@ fn main() -> Result<()> {
     let mut rng = thread_rng();
     let random_train_idx: usize = rng.gen_range(0..builtins.len());
 
-    let state = if cmdline.is_present("dir") {
+    let state = if cmdline.is_present("c51") {
+        TrainState::new(&trains::c51_train())?
+    } else if cmdline.is_present("logo") {
+        TrainState::new(&trains::logo_train())?
+    } else if cmdline.is_present("dir") {
         let definition = load_random_file(&mut rng, cmdline.value_of("dir").unwrap())?;
         TrainState::new(&definition)?
     } else {
