@@ -16,7 +16,7 @@ $(BIN_PATH):
 
 .PHONY: run
 run: $(BIN_PATH)
-	cargo run
+	cargo run --release
 
 .PHONY: clean
 clean:
@@ -33,7 +33,7 @@ check-fmt:
 
 .PHONY: test
 test: $(BIN_PATH)
-	SL_BIN_PATH=$(BIN_PATH) cargo test
+	SL_BIN_PATH=$(BIN_PATH) cargo test --release
 
 .PHONY: pkg
 pkg: $(DEB_PATH)
