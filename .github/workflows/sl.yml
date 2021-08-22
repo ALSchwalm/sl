@@ -23,7 +23,8 @@ jobs:
       - uses: actions/checkout@v2
       - name: Running Unittests
         run: |
-          make test
+          make sl
+          ./tests/steps/run_helper.sh target/release/sl --help
 
   Package:
     runs-on: ubuntu-18.04
