@@ -271,6 +271,14 @@ pub fn c51_train() -> TrainDefinition {
     )
 }
 
+pub fn accident_train() -> TrainDefinition {
+    let mut def = default_train();
+
+    def.train = include_str!("accident.train").to_string();
+
+    def
+}
+
 pub fn builtin_trains() -> Vec<TrainDefinition> {
     vec![default_train(), logo_train(), c51_train()]
 }

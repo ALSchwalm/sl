@@ -203,13 +203,24 @@ fn main() -> Result<()> {
                 .takes_value(true),
         )
         .arg(
+            Arg::with_name("accident")
+                .short("a")
+                .long("accident")
+                .help("An accident happened")
+                .conflicts_with("number")
+                .conflicts_with("dir")
+                .conflicts_with("logo")
+                .conflicts_with("c51")
+        )
+        .arg(
             Arg::with_name("c51")
                 .short("c")
                 .long("c51")
                 .help("Show the C51 train")
                 .conflicts_with("number")
                 .conflicts_with("dir")
-                .conflicts_with("logo"),
+                .conflicts_with("logo")
+                .conflicts_with("accident"),
         )
         .arg(
             Arg::with_name("logo")
@@ -218,7 +229,8 @@ fn main() -> Result<()> {
                 .help("Show the LOGO train")
                 .conflicts_with("number")
                 .conflicts_with("dir")
-                .conflicts_with("c51"),
+                .conflicts_with("c51")
+                .conflicts_with("accident"),
         )
         .arg(
             Arg::with_name("dir")
@@ -226,7 +238,7 @@ fn main() -> Result<()> {
                 .long("directory")
                 .value_name("DIR")
                 .help("Load a random train from a directory")
-                .takes_value(true),
+                .takes_value(true)
         )
         .get_matches();
 
@@ -237,7 +249,9 @@ fn main() -> Result<()> {
     let mut rng = thread_rng();
     let random_train_idx: usize = rng.gen_range(0..builtins.len());
 
-    let state = if cmdline.is_present("c51") {
+    let state = if cmdline.is_present("accident") {
+        TrainState::new(&trains::accident_train())?
+    } else if cmdline.is_present("c51") {
         TrainState::new(&trains::c51_train())?
     } else if cmdline.is_present("logo") {
         TrainState::new(&trains::logo_train())?
