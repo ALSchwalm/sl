@@ -1,3 +1,9 @@
+//! Frame and animation abstractions
+//!
+//! Provides types that represent animations that can be shown
+//! moving across the screen. Animations are composed of frames
+//! and can be shown at different rates.
+
 use crate::error::{Error, Result};
 
 /// A struct representing a single frame of animation
@@ -20,15 +26,23 @@ impl Frame {
         })
     }
 
+    /// Width of this frame
+    ///
+    /// The width of a frame is defined as the length of the longest
+    /// line in the frame.
     fn width(&self) -> usize {
         self.text.iter().map(|line| line.len()).max().unwrap_or(0)
     }
 
+    /// Height of this frame
+    /// The height of the frame is defined as the number of lines in
+    /// the frame
     fn height(&self) -> usize {
         self.text.len()
     }
 }
 
+/// A representation of a collection of frames which can be animated together
 pub struct Animation {
     frames: Vec<Frame>,
     current_frame_idx: usize,
@@ -41,6 +55,11 @@ impl Animation {
     ///
     /// Frames are expected to be delimited by two newlines. An
     /// error is returned if no frames are found
+    ///
+    /// # Arguments
+    ///
+    /// * `speed` - The speed of the animation, lower is faster
+    /// * `text` - A collection of frames separated by two newlines
     pub fn new(speed: usize, text: &str) -> Result<Self> {
         if speed == 0 {
             return Err(Error::InvalidAnimationSpeed(speed));

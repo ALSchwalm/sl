@@ -18,6 +18,10 @@ $(BIN_PATH):
 run: $(BIN_PATH)
 	cargo run --release
 
+.PHONY: docs
+docs:
+	cargo doc --open
+
 .PHONY: clean
 clean:
 	cargo clean

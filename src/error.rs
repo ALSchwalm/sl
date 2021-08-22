@@ -1,6 +1,13 @@
+//! Error and Result types
+
 use std::error::Error as StdError;
 use std::fmt::{Debug, Display, Formatter};
 
+/// SL error type
+///
+/// All errors in SL are ultimately wrapped in this type. It represents
+/// a simple, generic error type that has human-readble Display/Debug
+/// impls.
 pub enum Error {
     Io(std::io::Error),
     InvalidAnimationSpeed(usize),
@@ -35,4 +42,5 @@ impl Debug for Error {
 
 impl StdError for Error {}
 
+/// SL result type
 pub type Result<T> = std::result::Result<T, Error>;

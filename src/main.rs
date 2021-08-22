@@ -14,25 +14,53 @@ mod trains;
 use animation::Animation;
 use error::{Error, Result};
 
+/// Rate at which the train moves up relative to left. Higher is slower.
 const FLYING_RATE: i32 = 10;
 
+/// A representation of the state of the smoke portion of a train
 struct SmokeState {
+
+    /// The underlying animation
     animation: Animation,
+
+    /// The offset of the smoke from the train
+    ///
+    /// This is used to align the smoke with a smokestack. Higher
+    /// values shift the stack right.
     offset: usize,
 }
 
+/// A representation of the trains state
 struct TrainState {
+    /// Terminal viewport width in characters
     view_width: Option<usize>,
+
+    /// Terminal viewport height in characters
     view_height: Option<usize>,
+
+    /// Horizontal offset of the train
     x: i32,
+
+    /// Vertical offset of the train
     y: i32,
+
+    /// Train animation
     train_animation: Animation,
+
+    /// Current state of the train's smoke
     smoke: Option<SmokeState>,
+
+    /// Set when the train is flying up as well as left
     flying: bool,
 }
 
 impl TrainState {
     /// Create a new TrainState with the given animation
+    ///
+    /// # Arguments
+    ///
+    /// * `definition` - The definition for the train
+    /// * `flying` - When set, the train will fly up as well as left
     fn new(definition: &trains::TrainDefinition, flying: bool) -> Result<Self> {
         let train_animation = Animation::new(definition.train_animation_speed, &definition.train)?;
 
@@ -62,6 +90,9 @@ impl TrainState {
     }
 
     /// Determine whether the train has animated accross the screen
+    ///
+    /// Returns 'true' when the entire train _and_ smoke are no longer
+    /// visible on the screen.
     fn complete(&self) -> bool {
         let max_width = std::cmp::max(
             self.train_animation.width(),
@@ -313,7 +344,6 @@ fn main() -> Result<()> {
             // also, check the view_width state to determine if we've already
             // done this, to avoid reseting 'y' while running.
             if state.flying && state.view_width.is_none() {
-
                 // Start at the bottom left, but shifted up by the height of the
                 // train plus it's (optional) smoke
                 state.y = constraints.y as i32
