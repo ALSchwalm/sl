@@ -32,7 +32,7 @@ check-fmt:
 	cargo fmt --all -- --check
 
 .PHONY: test
-test:
+test: $(BIN_PATH)
 	SL_BIN_PATH=$(BIN_PATH) cargo test
 
 .PHONY: pkg
