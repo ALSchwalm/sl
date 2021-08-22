@@ -215,7 +215,7 @@ fn main() -> Result<()> {
         )
         .arg(
             Arg::with_name("flying")
-                .short("f")
+                .short("F")
                 .long("flying")
                 .help("The train flies up as well as left"),
         )
