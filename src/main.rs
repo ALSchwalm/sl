@@ -19,7 +19,6 @@ const FLYING_RATE: i32 = 10;
 
 /// A representation of the state of the smoke portion of a train
 struct SmokeState {
-
     /// The underlying animation
     animation: Animation,
 
