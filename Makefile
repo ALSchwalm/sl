@@ -3,7 +3,7 @@ VERSION=6.0.0
 BIN_PATH=target/release/sl
 DEB_PATH=sl-$(VERSION)-1.deb
 
-DOCKER_IMG=adamschwalm/sl-build:4
+DOCKER_IMG=adamschwalm/sl-build:5
 
 .PHONY: all
 all: sl
@@ -33,7 +33,7 @@ check-fmt:
 
 .PHONY: test
 test:
-	cargo test
+	SL_BIN_PATH=$(BIN_PATH) cargo test
 
 .PHONY: pkg
 pkg: $(DEB_PATH)

@@ -1,7 +1,7 @@
 FROM debian:stable-20210816
 MAINTAINER Adam Schwalm <adamschwalm@gmail.com>
 
-RUN apt-get update && apt-get install -y ruby curl make gcc
+RUN apt-get update && apt-get install -y ruby curl make gcc screen
 
 # Install FPM for building the deb
 RUN gem install fpm

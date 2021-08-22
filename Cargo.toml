@@ -4,7 +4,13 @@ version = "0.1.0"
 authors = ["Adam Schwalm <adamschwalm@gmail.com>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[[test]]
+name = "sl_test"
+harness = false
+
+[dev-dependencies]
+cucumber_rust = "0.9"
+tokio = { version = "1.2.0", features = ["rt-multi-thread", "macros", "time"] }
 
 [dependencies]
 rand = "0.8.4"
