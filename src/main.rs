@@ -14,6 +14,8 @@ mod trains;
 use animation::Animation;
 use error::{Error, Result};
 
+const FLYING_RATE: i32 = 10;
+
 struct SmokeState {
     animation: Animation,
     offset: usize,
@@ -26,11 +28,12 @@ struct TrainState {
     y: i32,
     train_animation: Animation,
     smoke: Option<SmokeState>,
+    flying: bool,
 }
 
 impl TrainState {
     /// Create a new TrainState with the given animation
-    fn new(definition: &trains::TrainDefinition) -> Result<Self> {
+    fn new(definition: &trains::TrainDefinition, flying: bool) -> Result<Self> {
         let train_animation = Animation::new(definition.train_animation_speed, &definition.train)?;
 
         let smoke = definition
@@ -52,6 +55,7 @@ impl TrainState {
             view_height: None,
             x: 0,
             y: 0,
+            flying,
             train_animation,
             smoke,
         })
@@ -129,6 +133,13 @@ impl TrainState {
         self.x -= 1;
         self.train_animation.step();
 
+        // Fly up more slowly than to the left, because terminal
+        // cells are rectangular, so less cells vertically than
+        // horizontally
+        if self.flying && self.x % FLYING_RATE == 0 {
+            self.y -= 1;
+        }
+
         if let Some(smoke_state) = &mut self.smoke {
             smoke_state.animation.step();
         }
@@ -203,6 +214,12 @@ fn main() -> Result<()> {
                 .takes_value(true),
         )
         .arg(
+            Arg::with_name("flying")
+                .short("f")
+                .long("flying")
+                .help("The train flies up as well as left"),
+        )
+        .arg(
             Arg::with_name("accident")
                 .short("a")
                 .long("accident")
@@ -210,7 +227,7 @@ fn main() -> Result<()> {
                 .conflicts_with("number")
                 .conflicts_with("dir")
                 .conflicts_with("logo")
-                .conflicts_with("c51")
+                .conflicts_with("c51"),
         )
         .arg(
             Arg::with_name("c51")
@@ -238,7 +255,7 @@ fn main() -> Result<()> {
                 .long("directory")
                 .value_name("DIR")
                 .help("Load a random train from a directory")
-                .takes_value(true)
+                .takes_value(true),
         )
         .get_matches();
 
@@ -249,15 +266,17 @@ fn main() -> Result<()> {
     let mut rng = thread_rng();
     let random_train_idx: usize = rng.gen_range(0..builtins.len());
 
+    let flying = cmdline.is_present("flying");
+
     let state = if cmdline.is_present("accident") {
-        TrainState::new(&trains::accident_train())?
+        TrainState::new(&trains::accident_train(), flying)?
     } else if cmdline.is_present("c51") {
-        TrainState::new(&trains::c51_train())?
+        TrainState::new(&trains::c51_train(), flying)?
     } else if cmdline.is_present("logo") {
-        TrainState::new(&trains::logo_train())?
+        TrainState::new(&trains::logo_train(), flying)?
     } else if cmdline.is_present("dir") {
         let definition = load_random_file(&mut rng, cmdline.value_of("dir").unwrap())?;
-        TrainState::new(&definition)?
+        TrainState::new(&definition, flying)?
     } else {
         let train_idx = cmdline.value_of("number");
         let train_idx = train_idx
@@ -270,7 +289,7 @@ fn main() -> Result<()> {
             return Err(Error::InvalidTrainIndex(train_idx));
         }
 
-        TrainState::new(&builtins[train_idx])?
+        TrainState::new(&builtins[train_idx], flying)?
     };
 
     let canvas = Canvas::new(state)
@@ -290,9 +309,26 @@ fn main() -> Result<()> {
             _ => cursive::event::EventResult::Ignored,
         })
         .with_required_size(|state, constraints| {
+            // If we're flying, start at the bottom right
+            // also, check the view_width state to determine if we've already
+            // done this, to avoid reseting 'y' while running.
+            if state.flying && state.view_width.is_none() {
+
+                // Start at the bottom left, but shifted up by the height of the
+                // train plus it's (optional) smoke
+                state.y = constraints.y as i32
+                    - (state.train_animation.height() as i32
+                        + state
+                            .smoke
+                            .as_ref()
+                            .map(|smoke| smoke.animation.height() as i32)
+                            .unwrap_or(0));
+            }
+
             // Now that there is a known viewport size, we can set it in the state
             state.view_width = Some(constraints.x);
             state.view_height = Some(constraints.y);
+
             constraints
         });
 
