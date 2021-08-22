@@ -25,6 +25,8 @@ jobs:
         run: |
           make sl
           ./tests/steps/run_helper.sh target/release/sl --help
+          ./tests/steps/run_helper.sh target/release/sl --asdf
+          ./tests/steps/run_helper.sh target/release/sl
 
   Package:
     runs-on: ubuntu-18.04
