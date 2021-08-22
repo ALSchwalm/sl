@@ -14,14 +14,14 @@ jobs:
       run: |
         make check-fmt
 
-  Unittest:
+  Test:
     runs-on: ubuntu-18.04
     container:
       image: adamschwalm/sl-build:5
       options: "-u 0:0"
     steps:
       - uses: actions/checkout@v2
-      - name: Running Unittests
+      - name: Running Tests
         run: |
           make test
 
